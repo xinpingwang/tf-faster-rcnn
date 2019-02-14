@@ -206,6 +206,9 @@ class pascal_voc(imdb):
                 continue
             print('Writing {} VOC results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
+            file_dir = os.path.dirname(filename)
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
             with open(filename, 'wt') as f:
                 for im_ind, index in enumerate(self.image_index):
                     dets = all_boxes[cls_ind][im_ind]
