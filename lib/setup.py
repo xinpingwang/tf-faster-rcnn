@@ -65,6 +65,22 @@ except AttributeError:
     numpy_include = np.get_numpy_include()
 
 
+def get_gpu_arch():
+    model_arch_map = {'TitanX': 'sm_52', 'GTX 960M': 'sm_50', 'GTX 1080': 'sm_61', 'Grid K520': 'sm_30',
+                      'Tesla K80': 'sm_37'}
+    from tensorflow.python.client import device_lib
+    local_devices = device_lib.list_local_devices()
+    gpu_device = [x for x in local_devices if x.device_type == 'GPU']
+    if len(gpu_device) > 0:
+        gpu_desc = gpu_device[0].physical_device_desc
+        import re
+        m = re.search('name: ([a-zA-Z0-9 ]*)', gpu_desc)
+        if m:
+            gpu_model = m.group(1)
+            return model_arch_map.get(gpu_model)
+    return ''
+
+
 def customize_compiler_for_nvcc(self):
     """inject deep into distutils to customize how the dispatch
     to gcc/nvcc works.
@@ -138,7 +154,7 @@ if CUDA is not None:
                   # we're only going to use certain compiler args with nvcc and not with gcc
                   # the implementation of this trick is in customize_compiler() below
                   extra_compile_args={'gcc': ["-Wno-unused-function"],
-                                      'nvcc': ['-arch=sm_52',
+                                      'nvcc': ['-arch=' + get_gpu_arch(),
                                                '--ptxas-options=-v',
                                                '-c',
                                                '--compiler-options',
